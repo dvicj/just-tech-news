@@ -1,10 +1,16 @@
 //13.1.5 - model class - what we create our own models from using the extends keyword
 const { Model, DataTypes } = require('sequelize');
-const sequelize = require('../config/connection');
 const bcrypt = require('bcrypt');
+const sequelize = require('../config/connection');
+
 
 //13.1.5 - create User model
-class User extends Model {}
+class User extends Model {
+    //13.2.6 - set up method to run on instance data (per user) to check password 
+    checkPassword(loginPw) {
+        return bcrypt.compareSync(loginPw, this.password);
+    }
+}
 
 //13.1.5 - define table columns and configuration
 User.init(
@@ -65,6 +71,7 @@ User.init(
         timestamps: false, 
         //dont pluralize name of database table
         freezeTableName: true, 
+        underscored: true, 
         //make it so our model name stays lowercase in the database
         modelName: 'user'
     }
