@@ -36,10 +36,16 @@ User.init(
             }
         },
         //define a password column
+        password: {
+            type: DataTypes.STRING, 
+            allowNull: false, 
+            validate: {
+                //this means the password must be atleast 4 characters long
+                len: [4]
+            }
+        }
     },
     {
-        //TABLE CONFIGURATION OPTIONS GO HERE
-
         //pass in out imported sequelize connection (the direct connection to our database)
         sequelize, 
         //don't automatically created createdAt/updatedAt timestamp fields
