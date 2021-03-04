@@ -3,21 +3,8 @@ const { Comment } = require('../../models');
 
 router.get('/', (req, res) => {
     console.log('===================');
-    Comment.findAll({
-        attributes: [
-            'id', 
-            'comment_text',
-            'created_at',
-            [sequelize.literal('(SELECT COUNT(*) FROM comment WHERE post.id = comment.post_id)'), 'comment_count']
-        ],
-        include: [
-            {
-                model: User, 
-                attributes: ['username']
-            }
-        ]
-    })
-    .then(dbPostData => res.json(dbPostData))
+    Comment.findAll()
+    .then(dbCommentData => res.json(dbCommentData))
     .catch(err => {
         console.log(err);
         res.status(500).json(err);
@@ -54,7 +41,6 @@ router.delete('/:id', (req, res) => {
           console.log(err);
           res.status(500).json(err);
         });
-
 });
 
 module.exports = router;
