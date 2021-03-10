@@ -17,7 +17,9 @@ const sess = {
 
 //14.1.4 - set up handlebars as app's templat engine of choice 
 const exphbs = require('express-handlebars');
-const hbs = exphbs.create({});
+const helpers = require('./utils/helpers');
+const hbs = exphbs.create({ helpers });
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
