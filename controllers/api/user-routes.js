@@ -1,8 +1,9 @@
 const router = require('express').Router(); 
 const { User, Post, Vote } = require('../../models');
+const withAuth = require('../utils/auth');
 
 //13.1.6 - GET /api/users
-router.get('/', (req,res) => {
+router.get('/', withAuth, (req,res) => {
     //access our User model and run .findAll() method
     User.findAll( {
         attributes: { exclude: ['password']}
@@ -15,7 +16,7 @@ router.get('/', (req,res) => {
 });
 
 //13.1.6 - GET /api/users/1
-router.get('/:id', (req,res) => {
+router.get('/:id', withAuth, (req,res) => {
     User.findOne({
         attributes: { exclude: ['password']},
         where: { // like "SELECT * FROM users WHERE id=1"
@@ -56,44 +57,67 @@ router.get('/:id', (req,res) => {
 });
 
 //13.1.6 - POST /api/users
-router.post('/', (req,res) => {
+router.post('/', withAuth, (req,res) => {
     //expects { username: '', email: '', password: ''}
     User.create({
         username: req.body.username,
         email: req.body.email,
         password: req.body.email,
     })
-    .then(dbUserData => res.json(dbUserData))
-    .catch(err => {
-        console.log(err);
-        res.status(500).json(err);
+    .then(dbUserData => {
+        req.session.save(() => {
+            req.session.user_id = dbUserData.id;
+            req.session.username = dbUserData.username;
+            req.session.loggedIn = true;
+      
+            res.json(dbUserData);
+        });
+    })
+}); 
+
+//13.2.6 
+router.post('/login', withAuth, (req, res) => {
+    User.findOne({
+      where: {
+        email: req.body.email
+      }
+    }).then(dbUserData => {
+      if (!dbUserData) {
+        res.status(400).json({ message: 'No user with that email address!' });
+        return;
+      }
+  
+      const validPassword = dbUserData.checkPassword(req.body.password);
+  
+      if (!validPassword) {
+        res.status(400).json({ message: 'Incorrect password!' });
+        return;
+      }
+  
+      req.session.save(() => {
+        // declare session variables
+        req.session.user_id = dbUserData.id;
+        req.session.username = dbUserData.username;
+        req.session.loggedIn = true;
+  
+        res.json({ user: dbUserData, message: 'You are now logged in!' });
+      });
     });
 });
 
-//13.2.6 
-router.post('/login', (req, res) => {
-    User.findOne({
-        where: {
-            email: req.body.email
-        }
-    })
-    .then(dbUserData => {
-        if (!dbUserData) {
-            res.status(400).json({ message: 'No user with that email address!' });
-            return; 
-        }
-        //13.2.6 - verify user 
-        const validPassword = dbUserData.checkPassword(req.body.password);
-        if(!validPassword) {
-            res.status(400).json({ message: 'Incorrect password!' });
-            return; 
-        }
-        res.json({ user: dbUserData, message: 'You are now logged in!' });
-    });
+router.post('/logout', withAuth, (req,res) => {
+    if (req.session.loggedIn) {
+        req.session.destroy(() => {
+          res.status(204).end();
+        });
+      }
+      else {
+        res.status(404).end();
+      }
 });
 
 //13.1.6 - PUT /api/users/1
-router.put('/:id', (req,res) => {
+router.put('/:id', withAuth, (req,res) => {
     //if req.body has exact key/value pairs to match the model, you can just use req.body
     User.update(req.body, {
         individualHooks: true, 
@@ -115,7 +139,7 @@ router.put('/:id', (req,res) => {
 });
 
 //13.1.6 - DELETE /api/users/1
-router.delete('/:id', (req, res) => {
+router.delete('/:id', withAuth, (req, res) => {
     User.destroy({
         where: {
             id: req.params.id
