@@ -1,8 +1,9 @@
 const router = require('express').Router(); 
 const { User, Post, Vote } = require('../../models');
+const withAuth = require('../utils/auth');
 
 //13.1.6 - GET /api/users
-router.get('/', (req,res) => {
+router.get('/', withAuth, (req,res) => {
     //access our User model and run .findAll() method
     User.findAll( {
         attributes: { exclude: ['password']}
@@ -15,7 +16,7 @@ router.get('/', (req,res) => {
 });
 
 //13.1.6 - GET /api/users/1
-router.get('/:id', (req,res) => {
+router.get('/:id', withAuth, (req,res) => {
     User.findOne({
         attributes: { exclude: ['password']},
         where: { // like "SELECT * FROM users WHERE id=1"
@@ -56,7 +57,7 @@ router.get('/:id', (req,res) => {
 });
 
 //13.1.6 - POST /api/users
-router.post('/', (req,res) => {
+router.post('/', withAuth, (req,res) => {
     //expects { username: '', email: '', password: ''}
     User.create({
         username: req.body.username,
@@ -75,7 +76,7 @@ router.post('/', (req,res) => {
 }); 
 
 //13.2.6 
-router.post('/login', (req, res) => {
+router.post('/login', withAuth, (req, res) => {
     User.findOne({
       where: {
         email: req.body.email
@@ -104,7 +105,7 @@ router.post('/login', (req, res) => {
     });
 });
 
-router.post('/logout', (req,res) => {
+router.post('/logout', withAuth, (req,res) => {
     if (req.session.loggedIn) {
         req.session.destroy(() => {
           res.status(204).end();
@@ -116,7 +117,7 @@ router.post('/logout', (req,res) => {
 });
 
 //13.1.6 - PUT /api/users/1
-router.put('/:id', (req,res) => {
+router.put('/:id', withAuth, (req,res) => {
     //if req.body has exact key/value pairs to match the model, you can just use req.body
     User.update(req.body, {
         individualHooks: true, 
@@ -138,7 +139,7 @@ router.put('/:id', (req,res) => {
 });
 
 //13.1.6 - DELETE /api/users/1
-router.delete('/:id', (req, res) => {
+router.delete('/:id', withAuth, (req, res) => {
     User.destroy({
         where: {
             id: req.params.id
